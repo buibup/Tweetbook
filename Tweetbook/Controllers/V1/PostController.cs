@@ -43,6 +43,17 @@ namespace Tweetbook.Controllers.V1
             return NotFound();
         }
 
+        [HttpDelete(ApiRoutes.Posts.Delete)]
+        public IActionResult Delete([FromRoute] Guid postId)
+        {
+            var deleted = _postService.DeletePost(postId);
+
+            if (deleted)
+                return NoContent();
+
+            return NotFound();
+        }
+
         [HttpGet(ApiRoutes.Posts.Get)]
         public IActionResult Get([FromRoute] Guid postId)
         {
@@ -57,10 +68,15 @@ namespace Tweetbook.Controllers.V1
         [HttpPost(ApiRoutes.Posts.Create)]
         public IActionResult Create([FromBody] CreatePostRequest postRequest)
         {
-            var post = new Post { Id = postRequest.Id };
+            var post = new Post { Id = postRequest?.Id };
 
-            if (post.Id != Guid.Empty)
+            if (post.Id == Guid.Empty || post.Id == null)
                 post.Id = Guid.NewGuid();
+
+            var isPost = _postService.CreatePost(post);
+
+            if (!isPost)
+                return NoContent();
 
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             var locationUri = $"{baseUrl}/{ApiRoutes.Posts.Get.Replace("{postId}", post.Id.ToString())}";
